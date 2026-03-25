@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const Transaction = require("./models/Transaction");
 const cors = require("cors");
 
 const app = express();
@@ -24,4 +25,21 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log("Server running");
+});
+app.post("/add", async (req, res) => {
+  const { type, amount, description } = req.body;
+
+  const newTransaction = new Transaction({
+    type,
+    amount,
+    description
+  });
+
+  await newTransaction.save();
+
+  res.json({ message: "Transaction saved" });
+});
+app.get("/transactions", async (req, res) => {
+  const data = await Transaction.find();
+  res.json(data);
 });

@@ -1,4 +1,4 @@
- import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
@@ -9,20 +9,18 @@ function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [type, setType] = useState("");
+  const [transactions, setTransactions] = useState([]);
 
-  const data = {
-    labels: ["Food", "Travel", "Shopping"],
-    datasets: [
-      {
-        data: [200, 150, 300],
-        backgroundColor: ["#ff6384", "#36a2eb", "#ffcd56"]
-      }
-    ]
-  };
+  // 🔥 Fetch transactions
+  useEffect(() => {
+    fetch("https://money-management-system-fxiv.onrender.com/transactions")
+      .then(res => res.json())
+      .then(data => setTransactions(data));
+  }, []);
 
   // 🔥 Backend Login
   const login = async () => {
-    const res = await fetch("http://localhost:5000/login", {
+    const res = await fetch("https://money-management-system-fxiv.onrender.com/login", {
       method: "POST"
     });
 
@@ -70,7 +68,7 @@ function App() {
     );
   }
 
-  // 📊 DASHBOARD UI
+  // 📊 Dashboard
   return (
     <div style={{
       minHeight:"100vh",
@@ -81,7 +79,7 @@ function App() {
 
       <h1 style={{textAlign:"center"}}>Dashboard</h1>
 
-      {/* Balance Card */}
+      {/* Balance */}
       <div style={{
         background:"linear-gradient(to right,#36d1dc,#5b86e5)",
         color:"white",
@@ -98,39 +96,17 @@ function App() {
 
       {/* Buttons */}
       <div style={{textAlign:"center"}}>
-        <button
-          onClick={()=>{
-            setShowForm(true);
-            setType("Income");
-          }}
-          style={{
-            background:"#28a745",
-            color:"white",
-            margin:"10px",
-            padding:"12px 20px",
-            border:"none",
-            borderRadius:"8px",
-            cursor:"pointer"
-          }}
-        >
+        <button onClick={()=>{
+          setShowForm(true);
+          setType("Income");
+        }} style={{background:"#28a745",color:"white",margin:"10px",padding:"10px"}}>
           + Add Income
         </button>
 
-        <button
-          onClick={()=>{
-            setShowForm(true);
-            setType("Expense");
-          }}
-          style={{
-            background:"#dc3545",
-            color:"white",
-            margin:"10px",
-            padding:"12px 20px",
-            border:"none",
-            borderRadius:"8px",
-            cursor:"pointer"
-          }}
-        >
+        <button onClick={()=>{
+          setShowForm(true);
+          setType("Expense");
+        }} style={{background:"#dc3545",color:"white",margin:"10px",padding:"10px"}}>
           - Add Expense
         </button>
       </div>
@@ -142,13 +118,29 @@ function App() {
           width:"300px",
           margin:"20px auto",
           padding:"20px",
-          borderRadius:"10px",
-          boxShadow:"0 4px 10px rgba(0,0,0,0.1)"
+          borderRadius:"10px"
         }}>
           <h3>Add {type}</h3>
+
           <input placeholder="Amount" style={{width:"90%",padding:"10px",margin:"5px"}}/>
           <input placeholder="Description" style={{width:"90%",padding:"10px",margin:"5px"}}/><br/>
-          <button onClick={()=>alert(type+" added")} style={{padding:"8px 15px"}}>
+
+          <button onClick={async () => {
+            await fetch("https://money-management-system-fxiv.onrender.com/add", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                type: type,
+                amount: 100,
+                description: "Test"
+              })
+            });
+
+            alert("Saved");
+            window.location.reload();
+          }} style={{padding:"8px 15px"}}>
             Save
           </button>
         </div>
@@ -160,15 +152,18 @@ function App() {
         width:"300px",
         margin:"20px auto",
         padding:"20px",
-        borderRadius:"10px",
-        boxShadow:"0 4px 10px rgba(0,0,0,0.1)"
+        borderRadius:"10px"
       }}>
         <h3>Recent Transactions</h3>
+
         <ul style={{listStyle:"none", padding:"0"}}>
-          <li style={{color:"green"}}>+ ₹5000 Salary</li>
-          <li style={{color:"red"}}>- ₹200 Food</li>
-          <li style={{color:"red"}}>- ₹150 Travel</li>
+          {transactions.map((t, index) => (
+            <li key={index} style={{color: t.type === "Income" ? "green" : "red"}}>
+              {t.type === "Income" ? "+" : "-"} ₹{t.amount} ({t.description})
+            </li>
+          ))}
         </ul>
+
       </div>
 
       {/* Chart */}
@@ -177,11 +172,18 @@ function App() {
         width:"320px",
         margin:"20px auto",
         padding:"20px",
-        borderRadius:"10px",
-        boxShadow:"0 4px 10px rgba(0,0,0,0.1)"
+        borderRadius:"10px"
       }}>
         <h3 style={{textAlign:"center"}}>Expense Overview</h3>
-        <Pie data={data} />
+
+        <Pie data={{
+          labels: ["Food", "Travel", "Shopping"],
+          datasets: [{
+            data: [200,150,300],
+            backgroundColor: ["#ff6384","#36a2eb","#ffcd56"]
+          }]
+        }} />
+
       </div>
 
     </div>
