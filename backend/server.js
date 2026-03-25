@@ -9,10 +9,9 @@ app.use(cors());
 app.use(express.json());
 
 // Connect to MongoDB
-mongoose.connect("mongodb://127.0.0.1:27017/moneyDB")
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log(err));
-
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch(err => console.log(err));
 // Test route
 app.get("/", (req, res) => {
   res.send("Backend Running");
@@ -40,6 +39,10 @@ app.post("/add", async (req, res) => {
   res.json({ message: "Transaction saved" });
 });
 app.get("/transactions", async (req, res) => {
-  const data = await Transaction.find();
-  res.json(data);
+  try {
+    const data = await Transaction.find();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
