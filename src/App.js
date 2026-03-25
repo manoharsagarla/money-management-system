@@ -10,22 +10,35 @@ function App() {
   const [showForm, setShowForm] = useState(false);
   const [type, setType] = useState("");
   const [transactions, setTransactions] = useState([]);
-
+const [amount, setAmount] = useState("");
+const [desc, setDesc] = useState("");
   // 🔥 Fetch transactions
   useEffect(() => {
-    fetch("https://money-management-system-fxiv.onrender.com/transactions")
-      .then(res => res.json())
-      .then(data => setTransactions(data));
-  }, []);
-
+  fetch("https://money-management-system-fxiv.onrender.com/transactions")
+    .then(res => res.text())
+    .then(text => {
+      try {
+        const data = JSON.parse(text);
+        setTransactions(data);
+      } catch {
+        console.log("Not JSON:", text);
+      }
+    });
+}, []);
   // 🔥 Backend Login
   const login = async () => {
     const res = await fetch("https://money-management-system-fxiv.onrender.com/login", {
       method: "POST"
     });
 
-    const data = await res.json();
-    alert(data.message);
+    const text = await res.text();
+
+try {
+  const data = JSON.parse(text);
+  alert(data.message);
+} catch {
+  alert(text);
+}
     setLoggedIn(true);
   };
 
@@ -122,9 +135,19 @@ function App() {
         }}>
           <h3>Add {type}</h3>
 
-          <input placeholder="Amount" style={{width:"90%",padding:"10px",margin:"5px"}}/>
-          <input placeholder="Description" style={{width:"90%",padding:"10px",margin:"5px"}}/><br/>
+         <input 
+  placeholder="Amount" 
+  value={amount}
+  onChange={(e) => setAmount(e.target.value)}
+  style={{width:"90%",padding:"10px",margin:"5px"}}
+/>
 
+<input 
+  placeholder="Description" 
+  value={desc}
+  onChange={(e) => setDesc(e.target.value)}
+  style={{width:"90%",padding:"10px",margin:"5px"}}
+/>
           <button onClick={async () => {
             await fetch("https://money-management-system-fxiv.onrender.com/add", {
               method: "POST",
@@ -133,8 +156,8 @@ function App() {
               },
               body: JSON.stringify({
                 type: type,
-                amount: 100,
-                description: "Test"
+                amount: Number(amount),
+description: desc
               })
             });
 
